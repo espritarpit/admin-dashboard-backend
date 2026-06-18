@@ -20,7 +20,7 @@ jobs:
             set -e
 
             DEPLOY_DIR="/home/esp/rohan-deploy"
-            REPO_URL="https://github.com/YOUR_ORG/YOUR_REPO.git"
+            REPO_URL="https://github.com/espritarpit/admin-dashboard-backend.git"
 
             echo "Prepare deploy directory"
             mkdir -p "$DEPLOY_DIR"
