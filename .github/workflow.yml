@@ -1,0 +1,38 @@
+name: admin-dashbord-backend
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy Node.js app on remote server
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: 10.10.11.32
+          username: esp
+          password: ${{ secrets.REMOTE_PASSWORD }}
+          script: |
+            set -e
+
+            cd /home/esp/rohansir
+
+            echo "Pull latest code"
+            git pull origin main
+
+            echo "Install dependencies"
+            npm install
+
+            echo "Build app"
+            npm run build || true
+
+            echo "Restart Node.js app with PM2"
+            pm2 restart "Java dev" || pm2 start npm --name "Java dev" -- start
+
+            pm2 save
+
+            echo "Node.js deployment completed successfully"
