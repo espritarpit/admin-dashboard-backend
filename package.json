@@ -10,7 +10,10 @@
     "dev": "vite",
     "build": "vue-tsc && vite build",
     "preview": "vite preview",
-    "start": "serve dist --single --listen ${PORT:-4173}"
+    "start": "serve dist --single --listen ${PORT:-4173}",
+    "lint": "eslint .",
+    "test": "jest",
+    "build": "tsc"
   },
   "dependencies": {
     "serve": "^14.2.3",
