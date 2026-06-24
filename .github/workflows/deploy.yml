@@ -1,59 +1,79 @@
 name: admin-dashboard-backend
- 
+
 on:
   push:
     branches:
       - main
- 
+
 jobs:
   deploy:
+    name: Deploy
     runs-on: self-hosted
- 
+
     steps:
-    - name: Deploy Node.js app on remote server
-      uses: appleboy/ssh-action@v1.0.3
-      with:
-        host: 10.10.11.32
-        username: esp
-        password: ${{ secrets.REMOTE_PASSWORD }}
-        script: |
-          set -e
-          DEPLOY_DIR="/home/esp/rohan-deploy"
-          REPO_URL="https://github.com/espritarpit/admin-dashboard-backend.git"
-          echo "Prepare deploy directory"
-          mkdir -p "$DEPLOY_DIR"
-          if [ ! -d "$DEPLOY_DIR/.git" ]; then
-            echo "Cloning repository"
-            rm -rf "$DEPLOY_DIR"
-            git clone "$REPO_URL" "$DEPLOY_DIR"
-          else
-            echo "Pull latest code"
+      - name: Deploy Node.js app on remote server
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: 10.10.11.32
+          username: esp
+          password: ${{ secrets.REMOTE_PASSWORD }}
+          script: |
+            set -e
+
+            DEPLOY_DIR="/home/esp/rohan-deploy"
+            REPO_URL="https://github.com/espritarpit/admin-dashboard-backend.git"
+
+            echo "Prepare deploy directory"
+            mkdir -p "$DEPLOY_DIR"
+
+            if [ ! -d "$DEPLOY_DIR/.git" ]; then
+              echo "Cloning repository"
+              rm -rf "$DEPLOY_DIR"
+              git clone "$REPO_URL" "$DEPLOY_DIR"
+            else
+              echo "Pull latest code"
+              cd "$DEPLOY_DIR"
+              git fetch origin main
+              git reset --hard origin/main
+            fi
+
             cd "$DEPLOY_DIR"
-            git fetch origin main
-            git reset --hard origin/main
-          fi
-          cd "$DEPLOY_DIR"
-          echo "Setup Node.js 20"
-          export NVM_DIR="$HOME/.nvm"
-          if [ ! -s "$NVM_DIR/nvm.sh" ]; then
-            echo "Installing NVM"
-            curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash
-          fi
-          . "$NVM_DIR/nvm.sh"
-          nvm install 20
-          nvm use 20
-          echo "Node version:"
-          node -v
-          npm -v
-          echo "Install dependencies"
-          npm install
-          echo "Build app"
-          npm run build
-          echo "Install PM2 if missing"
-          if ! command -v pm2 >/dev/null 2>&1; then
-            npm install -g pm2
-          fi
-          echo "Restart Node.js app with PM2"
-          pm2 restart "NodeJs" || pm2 start npm --name "NodeJs" -- start
-          pm2 save
-          echo "Node.js deployment completed successfully"
+
+            echo "Setup Node.js 20"
+            export NVM_DIR="$HOME/.nvm"
+
+            if [ ! -s "$NVM_DIR/nvm.sh" ]; then
+              echo "Installing NVM"
+              curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash
+            fi
+
+            . "$NVM_DIR/nvm.sh"
+
+            nvm install 20
+            nvm use 20
+
+            echo "Node version:"
+            node -v
+            npm -v
+
+            echo "Install dependencies"
+            if [ -f package-lock.json ]; then
+              npm ci
+            else
+              npm install
+            fi
+
+            echo "Build app"
+            npm run build
+
+            echo "Install PM2 if missing"
+            if ! command -v pm2 >/dev/null 2>&1; then
+              npm install -g pm2
+            fi
+
+            echo "Restart Node.js app with PM2"
+            pm2 restart "NodeJs" || pm2 start npm --name "NodeJs" -- start
+
+            pm2 save
+
+            echo "Node.js deployment completed successfully"
